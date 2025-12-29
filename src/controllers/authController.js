@@ -38,6 +38,22 @@ const AuthController = {
         });
       }
 
+      // ✅ Create default profile for new user
+      const defaultProfile = await db.Profile.create({
+        userId: user.id,
+        profileName: `${firstName}'s Profile`,
+        businessName: `${firstName} ${lastName}`,
+        profileType: 'personal',
+        currency: 'BDT',
+        currencySymbol: '৳',
+        fiscalYearStart: '01-01',
+        fiscalYearEnd: '12-31',
+        timeZone: 'Asia/Dhaka',
+        dateFormat: 'DD-MM-YYYY',
+        isActive: true,
+        isDefault: true
+      });
+
       // Generate tokens
       const tokens = generateTokenPair({ userId: user.id, email: user.email });
 
@@ -59,7 +75,8 @@ const AuthController = {
           id: user.id,
           email: user.email,
           firstName: user.firstName,
-          lastName: user.lastName
+          lastName: user.lastName,
+          profile: defaultProfile // ✅ Include default profile
         },
         tokens
       }, 'Registration successful');
@@ -77,7 +94,7 @@ const AuthController = {
     try {
       const { email, password } = req.body;
 
-      // Find user
+      // Find user with roles, permissions, and profiles
       const user = await db.User.findOne({
         where: { email },
         include: [
@@ -90,6 +107,13 @@ const AuthController = {
               as: 'permissions',
               through: { attributes: [] }
             }]
+          },
+          // ✅ Include user's first active profile
+          {
+            model: db.Profile,
+            as: 'profile',
+            where: { isActive: true },
+            required: false
           }
         ]
       });
@@ -119,6 +143,29 @@ const AuthController = {
         lastLoginIp: req.ip
       });
 
+      // ✅ Get first active profile (or create one if doesn't exist)
+      let userProfile = user.profiles && user.profiles.length > 0
+        ? user.profiles[0]
+        : null;
+
+      // If no profile exists, create default one
+      if (!userProfile) {
+        userProfile = await db.Profile.create({
+          userId: user.id,
+          profileName: `${user.firstName}'s Profile`,
+          businessName: `${user.firstName} ${user.lastName}`,
+          profileType: 'personal',
+          currency: 'BDT',
+          currencySymbol: '৳',
+          fiscalYearStart: '01-01',
+          fiscalYearEnd: '12-31',
+          timeZone: 'Asia/Dhaka',
+          dateFormat: 'DD-MM-YYYY',
+          isActive: true,
+          isDefault: true
+        });
+      }
+
       // Audit log
       await createAuditLog({
         userId: user.id,
@@ -129,8 +176,13 @@ const AuthController = {
         userAgent: req.get('user-agent')
       });
 
+      // ✅ Format user data with single profile
+      const userData = user.toJSON();
+      userData.profile = userProfile; // Add single profile
+      delete userData.profiles; // Remove profiles array
+
       return successResponse(res, {
-        user: user.toJSON(),
+        user: userData,
         tokens
       }, 'Login successful');
 
@@ -176,7 +228,9 @@ const AuthController = {
         include: [
           {
             model: db.Profile,
-            as: 'profile'
+            as: 'profiles', // ✅ Changed to 'profiles' (plural)
+            where: { isActive: true },
+            required: false
           },
           {
             model: db.Role,

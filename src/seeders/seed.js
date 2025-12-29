@@ -136,48 +136,88 @@ const seedDatabase = async () => {
 
     console.log('✓ Assigned permissions to roles');
 
-    // Create default categories
-    const defaultCategories = [
+    // ✅ Define default categories template
+    const defaultCategoriesTemplate = [
       // Income categories
-      { name: 'Salary', type: 'income', color: '#10B981', icon: '💰', isSystem: true },
-      { name: 'Business Income', type: 'income', color: '#3B82F6', icon: '💼', isSystem: true },
-      { name: 'Investment', type: 'income', color: '#8B5CF6', icon: '📈', isSystem: true },
-      { name: 'Freelance', type: 'income', color: '#F59E0B', icon: '💻', isSystem: true },
-      { name: 'Other Income', type: 'income', color: '#6B7280', icon: '💵', isSystem: true },
+      { name: 'Salary', type: 'income', color: '#10B981', icon: '💰', isSystem: true, budgetAmount: 0 },
+      { name: 'Business Income', type: 'income', color: '#3B82F6', icon: '💼', isSystem: true, budgetAmount: 0 },
+      { name: 'Investment', type: 'income', color: '#8B5CF6', icon: '📈', isSystem: true, budgetAmount: 0 },
+      { name: 'Freelance', type: 'income', color: '#F59E0B', icon: '💻', isSystem: true, budgetAmount: 0 },
+      { name: 'Other Income', type: 'income', color: '#6B7280', icon: '💵', isSystem: true, budgetAmount: 0 },
 
       // Expense categories
-      { name: 'Food & Dining', type: 'expense', color: '#EF4444', icon: '🍔', isSystem: true },
-      { name: 'Transportation', type: 'expense', color: '#F59E0B', icon: '🚗', isSystem: true },
-      { name: 'Shopping', type: 'expense', color: '#EC4899', icon: '🛍️', isSystem: true },
-      { name: 'Entertainment', type: 'expense', color: '#8B5CF6', icon: '🎬', isSystem: true },
-      { name: 'Bills & Utilities', type: 'expense', color: '#3B82F6', icon: '📱', isSystem: true },
-      { name: 'Healthcare', type: 'expense', color: '#10B981', icon: '🏥', isSystem: true },
-      { name: 'Education', type: 'expense', color: '#6366F1', icon: '📚', isSystem: true },
-      { name: 'Rent', type: 'expense', color: '#DC2626', icon: '🏠', isSystem: true },
-      { name: 'Insurance', type: 'expense', color: '#059669', icon: '🛡️', isSystem: true },
-      { name: 'Other Expense', type: 'expense', color: '#6B7280', icon: '📝', isSystem: true }
+      { name: 'Food & Dining', type: 'expense', color: '#EF4444', icon: '🍔', isSystem: true, budgetAmount: 10000 },
+      { name: 'Transportation', type: 'expense', color: '#F59E0B', icon: '🚗', isSystem: true, budgetAmount: 5000 },
+      { name: 'Shopping', type: 'expense', color: '#EC4899', icon: '🛍️', isSystem: true, budgetAmount: 8000 },
+      { name: 'Entertainment', type: 'expense', color: '#8B5CF6', icon: '🎬', isSystem: true, budgetAmount: 3000 },
+      { name: 'Bills & Utilities', type: 'expense', color: '#3B82F6', icon: '📱', isSystem: true, budgetAmount: 7000 },
+      { name: 'Healthcare', type: 'expense', color: '#10B981', icon: '🏥', isSystem: true, budgetAmount: 5000 },
+      { name: 'Education', type: 'expense', color: '#6366F1', icon: '📚', isSystem: true, budgetAmount: 4000 },
+      { name: 'Rent', type: 'expense', color: '#DC2626', icon: '🏠', isSystem: true, budgetAmount: 15000 },
+      { name: 'Insurance', type: 'expense', color: '#059669', icon: '🛡️', isSystem: true, budgetAmount: 3000 },
+      { name: 'Other Expense', type: 'expense', color: '#6B7280', icon: '📝', isSystem: true, budgetAmount: 5000 }
     ];
 
-    // Note: Categories need profileId, so create them when a profile is created
-    console.log('✓ Default categories defined (will be created with profiles)');
-
-    // Create demo admin user
+    // ✅ Create demo admin user
     const demoUser = await db.User.create({
       email: 'admin@gmail.com',
       password: '123456',
       firstName: 'Admin',
       lastName: 'User',
+      phone: '+8801700000000',
       isActive: true,
       isVerified: true
     });
 
     await demoUser.addRole(adminRole);
-    console.log('✓ Created demo admin user (admin@gmail.com / 123456)');
+    console.log('✓ Created demo admin user');
+
+    // ✅ Create default profile for demo user
+    const demoProfile = await db.Profile.create({
+      userId: demoUser.id,
+      profileName: "Admin's Profile",
+      businessName: 'Admin Business',
+      profileType: 'business',
+      industry: 'General',
+      currency: 'BDT',
+      currencySymbol: '৳',
+      fiscalYearStart: '01-01',
+      fiscalYearEnd: '12-31',
+      timeZone: 'Asia/Dhaka',
+      dateFormat: 'DD-MM-YYYY',
+      address: 'Dhaka, Bangladesh',
+      city: 'Dhaka',
+      country: 'Bangladesh',
+      phone: '+8801700000000',
+      email: 'admin@gmail.com',
+      isActive: true,
+      isDefault: true
+    });
+
+    console.log('✓ Created default profile');
+
+    // ✅ Create categories for demo profile
+    const demoCategories = defaultCategoriesTemplate.map(cat => ({
+      ...cat,
+      profileId: demoProfile.id,
+      userId: demoUser.id,
+      isActive: true
+    }));
+
+    await db.Category.bulkCreate(demoCategories);
+    console.log(`✓ Created ${demoCategories.length} categories`);
 
     console.log('\n🎉 Database seeded successfully!');
-    console.log('\nDefault Credentials:');
-    console.log('Email: admin@gmail.com');
+    console.log('\n═══════════════════════════════════════════════════════');
+    console.log('🔐 DEFAULT CREDENTIALS');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('Email:    admin@gmail.com');
     console.log('Password: 123456');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('\n✓ User created with:');
+    console.log('  - 1 Profile (Admin\'s Profile)');
+    console.log('  - 15 Categories (5 Income + 10 Expense)');
+    console.log('\n💡 Start the server: npm run dev\n');
 
     process.exit(0);
   } catch (error) {

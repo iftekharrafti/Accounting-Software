@@ -33,13 +33,21 @@ const ClientController = {
       }
 
       if (req.query.clientType) where.clientType = req.query.clientType;
-      if (req.query.isActive !== undefined) where.isActive = req.query.isActive === 'true';
+      if (req.query.isActive === 'true') {
+        where.isActive = true;
+      } else if (req.query.isActive === 'false') {
+        where.isActive = false;
+      } else {
+        where.isActive = true;
+      }
+
 
       const { count, rows } = await db.Client.findAndCountAll({
         where, limit, offset, order, distinct: true
       });
 
       const response = formatPaginationResponse(rows, page, limit, count);
+      // console.log("response: ", response);
       return paginatedResponse(res, response.data, response.pagination, 'Clients retrieved successfully');
     } catch (error) {
       console.error('Get clients error:', error);

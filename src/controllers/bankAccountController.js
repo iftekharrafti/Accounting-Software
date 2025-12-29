@@ -53,8 +53,12 @@ const BankAccountController = {
         where.accountType = req.query.accountType;
       }
 
-      if (req.query.isActive !== undefined) {
-        where.isActive = req.query.isActive === 'true';
+      if (req.query.isActive === 'true') {
+        where.isActive = true;
+      } else if (req.query.isActive === 'false') {
+        where.isActive = false;
+      } else {
+        where.isActive = true;
       }
 
       if (req.query.isDefault !== undefined) {

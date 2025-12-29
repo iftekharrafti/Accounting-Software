@@ -33,7 +33,13 @@ const VendorController = {
       }
 
       if (req.query.vendorType) where.vendorType = req.query.vendorType;
-      if (req.query.isActive !== undefined) where.isActive = req.query.isActive === 'true';
+      if (req.query.isActive === 'true') {
+        where.isActive = true;
+      } else if (req.query.isActive === 'false') {
+        where.isActive = false;
+      } else {
+        where.isActive = true;
+      }
 
       const { count, rows } = await db.Vendor.findAndCountAll({
         where, limit, offset, order, distinct: true
