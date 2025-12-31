@@ -16,6 +16,11 @@ const IncomeController = {
         createdBy: req.userId
       };
 
+      // Convert empty string to null for bankAccountId
+      if (incomeData.bankAccountId === '' || incomeData.bankAccountId === undefined) {
+        incomeData.bankAccountId = null;
+      }
+
       const income = await db.Income.create(incomeData);
 
       // Audit log
@@ -45,7 +50,7 @@ const IncomeController = {
     try {
       const { page, limit, offset } = buildPaginationOptions(req.query);
       const order = buildSortOptions(req.query, [['incomeDate', 'DESC']]);
-      
+
       // Build where clause
       const where = { profileId: req.profileId };
 
@@ -197,12 +202,15 @@ const IncomeController = {
         return errorResponse(res, 'Income not found', 404);
       }
 
+      // Convert empty string to null for bankAccountId
+      const updateData = { ...req.body, updatedBy: req.userId };
+      if (updateData.bankAccountId === '' || updateData.bankAccountId === undefined) {
+        updateData.bankAccountId = null;
+      }
+
       const oldValues = income.toJSON();
-      
-      await income.update({
-        ...req.body,
-        updatedBy: req.userId
-      });
+
+      await income.update(updateData);
 
       // Audit log
       await createAuditLog({

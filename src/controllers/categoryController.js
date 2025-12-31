@@ -16,6 +16,11 @@ const CategoryController = {
         createdBy: req.userId
       };
 
+      // Convert empty string to null for parentId
+      if (categoryData.parentId === '' || categoryData.parentId === undefined) {
+        categoryData.parentId = null;
+      }
+
       const category = await db.Category.create(categoryData);
 
       // Audit log
@@ -45,7 +50,7 @@ const CategoryController = {
     try {
       const { page, limit, offset } = buildPaginationOptions(req.query);
       const order = buildSortOptions(req.query, [['sortOrder', 'ASC'], ['name', 'ASC']]);
-      
+
       const where = { profileId: req.profileId };
 
       // Search filter
@@ -109,7 +114,7 @@ const CategoryController = {
    */
   getTree: async (req, res) => {
     try {
-      const where = { 
+      const where = {
         profileId: req.profileId,
         parentId: null // Get only root categories
       };
@@ -216,12 +221,15 @@ const CategoryController = {
         return errorResponse(res, 'Category cannot be its own parent', 400);
       }
 
+      // Convert empty string to null for parentId
+      const updateData = { ...req.body, updatedBy: req.userId };
+      if (updateData.parentId === '' || updateData.parentId === undefined) {
+        updateData.parentId = null;
+      }
+
       const oldValues = category.toJSON();
-      
-      await category.update({
-        ...req.body,
-        updatedBy: req.userId
-      });
+
+      await category.update(updateData);
 
       // Audit log
       await createAuditLog({

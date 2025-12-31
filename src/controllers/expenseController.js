@@ -16,6 +16,17 @@ const ExpenseController = {
         createdBy: req.userId
       };
 
+      // Convert empty strings to null for foreign keys
+      if (expenseData.bankAccountId === '' || expenseData.bankAccountId === undefined) {
+        expenseData.bankAccountId = null;
+      }
+      if (expenseData.vendorId === '' || expenseData.vendorId === undefined) {
+        expenseData.vendorId = null;
+      }
+      if (expenseData.paymentMethodId === '' || expenseData.paymentMethodId === undefined) {
+        expenseData.paymentMethodId = null;
+      }
+
       const expense = await db.Expense.create(expenseData);
 
       // Audit log
@@ -45,7 +56,7 @@ const ExpenseController = {
     try {
       const { page, limit, offset } = buildPaginationOptions(req.query);
       const order = buildSortOptions(req.query, [['expenseDate', 'DESC']]);
-      
+
       const where = { profileId: req.profileId };
 
       // Search filter
@@ -139,7 +150,7 @@ const ExpenseController = {
           },
           {
             model: db.PaymentMethod,
-            as: 'paymentMethod',
+            as: 'paymentMethodInfo',
             attributes: ['id', 'name', 'type']
           },
           {
@@ -187,7 +198,7 @@ const ExpenseController = {
           },
           {
             model: db.PaymentMethod,
-            as: 'paymentMethod'
+            as: 'paymentMethodInfo'
           },
           {
             model: db.User,
@@ -234,12 +245,21 @@ const ExpenseController = {
         return errorResponse(res, 'Expense not found', 404);
       }
 
+      // Convert empty strings to null for foreign keys
+      const updateData = { ...req.body, updatedBy: req.userId };
+      if (updateData.bankAccountId === '' || updateData.bankAccountId === undefined) {
+        updateData.bankAccountId = null;
+      }
+      if (updateData.vendorId === '' || updateData.vendorId === undefined) {
+        updateData.vendorId = null;
+      }
+      if (updateData.paymentMethodId === '' || updateData.paymentMethodId === undefined) {
+        updateData.paymentMethodId = null;
+      }
+
       const oldValues = expense.toJSON();
-      
-      await expense.update({
-        ...req.body,
-        updatedBy: req.userId
-      });
+
+      await expense.update(updateData);
 
       // Audit log
       await createAuditLog({
