@@ -6,7 +6,7 @@ const seedDatabase = async () => {
     console.log('🌱 Starting database seed...');
 
     // Sync database
-    await db.sequelize.sync({ force: true });
+    await db.sequelize.sync({ force: false });
     console.log('✓ Database synced');
 
     // Create Permissions
