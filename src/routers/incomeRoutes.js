@@ -5,7 +5,8 @@ const { body } = require('express-validator');
 const { authenticate, checkProfile } = require('../middlewares/auth');
 const { validate } = require('../middlewares/validate');
 const { auditLogger } = require('../middlewares/auditLogger');
-const IncomeController = require('../controllers/IncomeController');
+const IncomeController = require('../controllers/incomeController');
+// const IncomeController = require('../controllers/IncomeController');
 
 // Validation rules
 const incomeValidation = [
